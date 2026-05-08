@@ -40,7 +40,9 @@ def ejecutar_tarea_flujo(flujo_id: int):
         nombre_limpio = "".join(c if c.isalnum() else "_" for c in flujo.nombre).lower()
         nombre_archivo = f"flujo_{nombre_limpio}_{timestamp}.xlsx"
         
-        ruta_salida = os.path.join("uploads", "processed", nombre_archivo)
+        usuario_id = flujo.usuario_id
+        base_dir = os.getenv("DATA_DIR", ".")
+        ruta_salida = os.path.join(base_dir, "uploads", str(usuario_id), "processed", nombre_archivo)
         os.makedirs(os.path.dirname(ruta_salida), exist_ok=True)
         
         df_limpio.to_excel(ruta_salida, index=False)

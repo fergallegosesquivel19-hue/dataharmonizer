@@ -11,9 +11,11 @@ def mostrar():
     st.write("Diseña la tubería de limpieza de datos seleccionando un archivo y aplicando reglas paso a paso.")
     
     usuario_id = st.session_state.usuario.get("id")
+    es_admin = st.session_state.usuario.get("es_admin", False)
     
     try:
-        res = requests.get(f"{BACKEND_URL}/conexiones/usuario/{usuario_id}")
+        endpoint = f"{BACKEND_URL}/conexiones/all" if es_admin else f"{BACKEND_URL}/conexiones/usuario/{usuario_id}"
+        res = requests.get(endpoint)
         if res.status_code == 200:
             conexiones = res.json()
             archivos = [c for c in conexiones if c['tipo'] == 'EXCEL']
@@ -32,6 +34,17 @@ def mostrar():
                     data = res_datos.json().get("data", [])
                     if data:
                         columnas = list(data[0].keys())
+                        df_vista = pd.DataFrame(data)
+                        
+                        # --- MÉTRICAS RÁPIDAS ---
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            st.metric("Total de Filas", f"{len(df_vista):,}")
+                        with col2:
+                            st.metric("Valores Nulos", f"{int(df_vista.isnull().sum().sum()):,}")
+                        with col3:
+                            st.metric("Columnas", f"{len(columnas):,}")
+                        st.divider()
 
                 st.subheader("2. Diseñar Flujo de Reglas")
                 

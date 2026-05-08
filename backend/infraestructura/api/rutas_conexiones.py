@@ -13,11 +13,9 @@ router = APIRouter(prefix="/conexiones", tags=["conexiones"])
 def get_repo_conexiones():
     return RepositorioConexionesSQLite()
 
-UPLOAD_DIR_ORIGINAL = "uploads/original"
-UPLOAD_DIR_WORKING = "uploads/working"
-
-os.makedirs(UPLOAD_DIR_ORIGINAL, exist_ok=True)
-os.makedirs(UPLOAD_DIR_WORKING, exist_ok=True)
+# Carpetas estáticas obsoletas, ahora se generan dinámicamente
+# UPLOAD_DIR_ORIGINAL = "uploads/original"
+# UPLOAD_DIR_WORKING = "uploads/working"
 
 @router.post("/upload")
 async def upload_file(
@@ -26,12 +24,19 @@ async def upload_file(
     repo: RepositorioConexionesSQLite = Depends(get_repo_conexiones)
 ):
     try:
-        original_path = os.path.join(UPLOAD_DIR_ORIGINAL, file.filename)
+        base_dir = os.getenv("DATA_DIR", ".")
+        user_original_dir = os.path.join(base_dir, "uploads", str(usuario_id), "original")
+        user_working_dir = os.path.join(base_dir, "uploads", str(usuario_id), "working")
+        
+        os.makedirs(user_original_dir, exist_ok=True)
+        os.makedirs(user_working_dir, exist_ok=True)
+        
+        original_path = os.path.join(user_original_dir, file.filename)
         with open(original_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         
         working_filename = f"working_{file.filename}"
-        working_path = os.path.join(UPLOAD_DIR_WORKING, working_filename)
+        working_path = os.path.join(user_working_dir, working_filename)
         shutil.copyfile(original_path, working_path)
         
         conexion = Conexion(
@@ -46,6 +51,10 @@ async def upload_file(
         return repo.guardar(conexion)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/all", response_model=List[Conexion])
+def listar_todas_conexiones(repo: RepositorioConexionesSQLite = Depends(get_repo_conexiones)):
+    return repo.obtener_todas()
 
 @router.get("/usuario/{usuario_id}", response_model=List[Conexion])
 def listar_conexiones(usuario_id: int, repo: RepositorioConexionesSQLite = Depends(get_repo_conexiones)):

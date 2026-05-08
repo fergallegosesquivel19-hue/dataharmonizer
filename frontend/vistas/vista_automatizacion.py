@@ -10,10 +10,12 @@ def mostrar():
     st.write("Programa la ejecución desatendida de tus flujos de limpieza para mantener tus datos procesados actualizados de forma automática.")
     
     usuario_id = st.session_state.usuario.get("id")
+    es_admin = st.session_state.usuario.get("es_admin", False)
     
     try:
         # Obtener flujos guardados
-        res_flujos = requests.get(f"{BACKEND_URL}/flujos/usuario/{usuario_id}")
+        endpoint = f"{BACKEND_URL}/flujos/all" if es_admin else f"{BACKEND_URL}/flujos/usuario/{usuario_id}"
+        res_flujos = requests.get(endpoint)
         if res_flujos.status_code == 200:
             flujos = res_flujos.json()
             if not flujos:

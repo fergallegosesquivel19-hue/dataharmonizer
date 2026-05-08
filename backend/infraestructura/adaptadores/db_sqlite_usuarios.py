@@ -1,11 +1,16 @@
 import sqlite3
+import os
 from typing import Optional, List
 from backend.dominio.entidades.usuario import Usuario
 from backend.dominio.puertos.repositorio_usuarios import RepositorioUsuarios
 
 class RepositorioUsuariosSQLite(RepositorioUsuarios):
-    def __init__(self, db_path: str = "usuarios.db"):
-        self.db_path = db_path
+    def __init__(self, db_path: str = None):
+        if db_path is None:
+            data_dir = os.getenv("DATA_DIR", ".")
+            self.db_path = os.path.join(data_dir, "usuarios.db")
+        else:
+            self.db_path = db_path
         self._inicializar_db()
 
     def _inicializar_db(self):

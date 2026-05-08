@@ -12,9 +12,11 @@ def mostrar():
     st.write("Selecciona un archivo subido para previsualizar su copia de trabajo y hacer ajustes manuales antes de la automatización.")
     
     usuario_id = st.session_state.usuario.get("id")
+    es_admin = st.session_state.usuario.get("es_admin", False)
     
     try:
-        res = requests.get(f"{BACKEND_URL}/conexiones/usuario/{usuario_id}")
+        endpoint = f"{BACKEND_URL}/conexiones/all" if es_admin else f"{BACKEND_URL}/conexiones/usuario/{usuario_id}"
+        res = requests.get(endpoint)
         if res.status_code == 200:
             conexiones = res.json()
             if conexiones:
@@ -29,6 +31,17 @@ def mostrar():
                             data = res_datos.json().get("data", [])
                             if data:
                                 df = pd.DataFrame(data)
+                                
+                                # --- MÉTRICAS RÁPIDAS ---
+                                col1, col2, col3 = st.columns(3)
+                                with col1:
+                                    st.metric("Total de Filas", f"{len(df):,}")
+                                with col2:
+                                    st.metric("Valores Nulos", f"{int(df.isnull().sum().sum()):,}")
+                                with col3:
+                                    st.metric("Columnas", f"{len(df.columns):,}")
+                                st.divider()
+                                
                                 st.write("📝 **Datos actuales (Copia de Trabajo)**")
                                 edited_df = st.data_editor(df, num_rows="dynamic", use_container_width=True)
                                 

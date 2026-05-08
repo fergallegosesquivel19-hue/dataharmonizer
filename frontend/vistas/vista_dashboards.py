@@ -10,9 +10,13 @@ def mostrar():
     st.title("Dashboards y Reportes Analíticos")
     st.write("Visualiza los datos que han sido procesados y homologados por tus flujos automáticos.")
     
+    usuario_id = st.session_state.usuario.get("id")
+    es_admin = st.session_state.usuario.get("es_admin", False)
+    
     try:
         # 1. Obtener lista de archivos procesados
-        res_archivos = requests.get(f"{BACKEND_URL}/dashboards/archivos")
+        endpoint_archivos = f"{BACKEND_URL}/dashboards/archivos/all" if es_admin else f"{BACKEND_URL}/dashboards/archivos/{usuario_id}"
+        res_archivos = requests.get(endpoint_archivos)
         
         if res_archivos.status_code == 200:
             archivos = res_archivos.json()
@@ -25,7 +29,10 @@ def mostrar():
             
             if archivo_sel:
                 with st.spinner("Cargando datos..."):
-                    res_datos = requests.get(f"{BACKEND_URL}/dashboards/datos/{archivo_sel}")
+                    # Si es admin, archivo_sel ya trae "usuario_id/archivo.xlsx"
+                    param_archivo = archivo_sel
+                    param_usuario = "all" if es_admin else str(usuario_id)
+                    res_datos = requests.get(f"{BACKEND_URL}/dashboards/datos/{param_usuario}/{param_archivo}")
                     
                 if res_datos.status_code == 200:
                     datos = res_datos.json().get("data", [])

@@ -17,6 +17,10 @@ def get_orquestador():
 def guardar_flujo(flujo: FlujoLimpieza, repo: RepositorioFlujosSQLite = Depends(get_repo_flujos)):
     return repo.guardar(flujo)
 
+@router.get("/all", response_model=List[FlujoLimpieza])
+def listar_todos_flujos(repo: RepositorioFlujosSQLite = Depends(get_repo_flujos)):
+    return repo.obtener_todos()
+
 @router.get("/usuario/{usuario_id}", response_model=List[FlujoLimpieza])
 def listar_flujos(usuario_id: int, repo: RepositorioFlujosSQLite = Depends(get_repo_flujos)):
     return repo.obtener_por_usuario(usuario_id)

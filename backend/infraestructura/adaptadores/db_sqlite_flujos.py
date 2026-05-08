@@ -8,12 +8,8 @@ from backend.dominio.entidades.flujo_limpieza import FlujoLimpieza, ReglaLimpiez
 class RepositorioFlujosSQLite(RepositorioFlujos):
     def __init__(self, db_path: str = None):
         if db_path is None:
-            # Check for DATABASE_URL env var, or fallback to local path
-            db_url = os.getenv("DATABASE_URL", "sqlite:///./usuarios.db")
-            if db_url.startswith("sqlite:///"):
-                self.db_path = db_url.replace("sqlite:///", "")
-            else:
-                self.db_path = "./usuarios.db"
+            data_dir = os.getenv("DATA_DIR", ".")
+            self.db_path = os.path.join(data_dir, "flujos.db")
         else:
             self.db_path = db_path
             
@@ -82,6 +78,25 @@ class RepositorioFlujosSQLite(RepositorioFlujos):
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             cursor.execute('SELECT id, nombre, conexion_origen_id, reglas_json, cron_expresion, usuario_id FROM flujos WHERE usuario_id = ?', (usuario_id,))
+            rows = cursor.fetchall()
+            for row in rows:
+                reglas_dicts = json.loads(row[3])
+                reglas = [ReglaLimpieza(**r) for r in reglas_dicts]
+                flujos.append(FlujoLimpieza(
+                    id=row[0],
+                    nombre=row[1],
+                    conexion_origen_id=row[2],
+                    reglas=reglas,
+                    cron_expresion=row[4],
+                    usuario_id=row[5]
+                ))
+        return flujos
+
+    def obtener_todos(self) -> List[FlujoLimpieza]:
+        flujos = []
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT id, nombre, conexion_origen_id, reglas_json, cron_expresion, usuario_id FROM flujos')
             rows = cursor.fetchall()
             for row in rows:
                 reglas_dicts = json.loads(row[3])
