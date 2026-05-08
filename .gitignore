@@ -1,0 +1,6 @@
+__pycache__/
+.env
+*.db
+datos_procesados/
+venv/
+.DS_Store

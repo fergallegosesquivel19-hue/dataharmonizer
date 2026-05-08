@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend.Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app/backend
+    environment:
+      - DATABASE_URL=sqlite:///./usuarios.db
+      - TZ=America/Mexico_City
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend.Dockerfile
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./frontend:/app/frontend
+    depends_on:
+      - backend
+    environment:
+      - BACKEND_URL=http://backend:8000
+      - TZ=America/Mexico_City
